@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { AsynFoundersConsole } from "../asynfounders-console";
+import { AsyncFoundersConsole } from "../asyncfounders-console";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -10,5 +10,5 @@ export const metadata: Metadata = {
 };
 
 export default function LoginPage() {
-  return <AsynFoundersConsole/>;
+  return <AsyncFoundersConsole/>;
 }

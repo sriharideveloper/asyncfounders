@@ -57,7 +57,7 @@ async function apiFetch(session: Session, path: string, body?: object) {
   return result;
 }
 
-export function AsynFoundersConsole() {
+export function AsyncFoundersConsole() {
   const supabase = useMemo(() => browserSupabase(), []);
   const [session, setSession] = useState<Session | null | undefined>(() => supabase ? undefined : null);
 
