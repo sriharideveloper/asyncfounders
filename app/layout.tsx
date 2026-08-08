@@ -6,12 +6,12 @@ import "@fontsource/poppins/600.css";
 import "./globals.css";
 
 const siteUrl = "https://asyncfounders.vercel.app";
-const description = "A persistent, source-backed company memory that keeps distributed founders aligned through consented AI phone callbacks.";
+const description = "Versioned, source-backed company memory for async founders—kept current through natural, consented AI callbacks.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   applicationName: "AsyncFounders",
-  title: { default: "AsyncFounders — Talk once. The company remembers.", template: "%s | AsyncFounders" },
+  title: { default: "AsyncFounders — Your company remembers", template: "%s | AsyncFounders" },
   description,
   keywords: ["distributed founders", "asynchronous collaboration", "team memory", "AI phone agent", "founder alignment", "CALL-E"],
   authors: [{ name: "AsyncFounders" }],
@@ -25,13 +25,13 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: siteUrl,
     siteName: "AsyncFounders",
-    title: "AsyncFounders — Talk once. The company remembers.",
+    title: "AsyncFounders — Your company remembers",
     description,
     images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "AsyncFounders — persistent company memory for distributed teams" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "AsyncFounders — Talk once. The company remembers.",
+    title: "AsyncFounders — Your company remembers",
     description,
     images: ["/opengraph-image"],
   },

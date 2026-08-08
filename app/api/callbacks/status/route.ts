@@ -25,9 +25,27 @@ export async function GET(request: Request) {
       const result = memoryResultValidator.safeParse(call.recipients[0]?.structuredResult);
       const score = call.completionConfidence?.score ?? 0;
       if (call.status === "completed" && call.taskCompleted === true && score >= 0.6 && result.success && result.data.outcome !== "no_usable_evidence") {
-        const payload = result.data.memory_items.filter((item) => item.confidence !== "low" && item.confidence !== "unknown").map((item) => ({ ...item, confidence: confidenceNumber(item.confidence) }));
+        const supportedItems = result.data.memory_items
+          .filter((item) => item.confidence !== "low" && item.confidence !== "unknown")
+          .map((item) => ({ ...item, confidence: confidenceNumber(item.confidence) }));
+        const unresolvedItems = result.data.unresolved_questions.map((question) => ({
+          type: "question" as const,
+          title: question.length > 120 ? `${question.slice(0, 117)}…` : question,
+          body: question,
+          status: "open" as const,
+          confidence: 0.7,
+          source_excerpt: "Explicitly left unresolved during the founder callback.",
+          audience: ["team"],
+        }));
+        const payload = [...supportedItems, ...unresolvedItems];
         const { data } = await supabase.rpc("ingest_call_memory", { target_session: session.id, memory_payload: payload });
         inserted = Number(data ?? 0);
+        if (session.mode === "catchup") {
+          const preview = session.preview as { companyVersion?: number };
+          if (Number.isFinite(preview.companyVersion)) {
+            await supabase.from("company_members").update({ last_briefed_version: preview.companyVersion }).eq("id", session.member_id);
+          }
+        }
       }
     }
     await supabase.from("call_sessions").update(update).eq("id", session.id);

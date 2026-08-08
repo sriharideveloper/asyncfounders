@@ -38,8 +38,10 @@ test("memory extraction rejects unsupported types", () => {
 });
 
 test("call task preserves uncertainty and forbids silent commitments", () => {
-  const task = buildTask({ companyName: "Acme", memberName: "Amina", mode: "deposit" });
+  const task = buildTask({ companyName: "Acme", memberName: "Amina", mode: "deposit", focus: "pricing", briefing: "[v8 · decision] Private beta pricing is accepted." });
   assert.match(task, /Never invent another teammate's belief/);
   assert.match(task, /Do not make commitments/);
   assert.match(task, /Company: Acme/);
+  assert.match(task, /not a rigid script/);
+  assert.match(task, /Private beta pricing/);
 });

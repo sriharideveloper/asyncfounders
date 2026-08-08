@@ -13,7 +13,7 @@ export async function POST(request: Request) {
     const { data: session } = await supabase.from("call_sessions").select("*").eq("id", parsed.data.previewId).eq("requested_by", user.id).single();
     if (!session) return NextResponse.json({ message: "This callback preview was not found." }, { status: 404 });
     if (session.status !== "previewed") return NextResponse.json({ ok: true, previewId: session.id, status: session.status, callId: session.provider_call_id, replayed: true });
-    const preview = session.preview as { expiresAt?: string };
+    const preview = session.preview as { expiresAt?: string; briefing?: string; focus?: string };
     if (!preview.expiresAt || new Date(preview.expiresAt).getTime() < Date.now()) {
       await supabase.from("call_sessions").update({ status: "expired" }).eq("id", session.id);
       return NextResponse.json({ message: "The preview expired. Review the call again." }, { status: 409 });
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     if (process.env.CALLE_LIVE_CALLS_ENABLED !== "true" || !process.env.CALLE_API_KEY) return NextResponse.json({ message: "Live CALL-E is not configured." }, { status: 503 });
     const client = new CalleClient({ apiKey: process.env.CALLE_API_KEY, baseUrl: "https://api.heycall-e.com" });
     const call = await client.calls.create({
-      task: buildTask({ companyName: company.name, memberName: member.display_name, mode: session.mode }),
+      task: buildTask({ companyName: company.name, memberName: member.display_name, mode: session.mode, briefing: preview.briefing, focus: preview.focus }),
       recipient: { phone: member.phone_e164, region: member.region, locale: member.locale },
       recipientResultSchema,
       metadata: { workflow: "asyncfounders", company_id: session.company_id, session_id: session.id, schema_version: "async-memory-v2" },
