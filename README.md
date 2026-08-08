@@ -11,11 +11,15 @@ AsyncFounders is a public, multi-tenant coordination product for distributed fou
 - PostgreSQL row-level security and private source storage.
 - Secure, expiring, email-bound invitation links.
 - Source ingestion for files, pasted notes and links.
+- Server-side public-link fetching, SSRF checks, readable-text extraction and chunk indexing.
 - Versioned facts, ideas, assumptions, decisions, questions, tasks and conflicts.
+- Evidence, confidence, audience, acknowledgement, dispute and deferral in the memory ledger.
 - Private E.164 callback profiles with explicit consent.
+- Self-recipient callbacks bound to the authenticated member; ambiguous historical numbers fail closed.
 - Exact callback preview, ten-minute expiry and payload-bound idempotency.
-- Server-only CALL-E integration with strict structured-result validation.
+- Server-only CALL-E integration with source-backed briefings, flexible conversation goals and strict structured-result validation.
 - Failed, malformed, ambiguous and low-confidence calls fail closed.
+- Company-wide settings, agent guidance and confirmed company deletion.
 
 ## Stack
 
@@ -32,7 +36,7 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Run `supabase/migrations/001_production_schema.sql` once in the Supabase SQL editor, then configure:
+Run `supabase/migrations/001_production_schema.sql` once in the Supabase SQL editor, followed by `supabase/migrations/002_founder_memory_upgrade.sql`, then configure:
 
 ```text
 NEXT_PUBLIC_SUPABASE_URL

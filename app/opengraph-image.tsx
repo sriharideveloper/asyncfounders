@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-export const alt = "AsyncFounders — persistent company memory for distributed teams";
+export const alt = "AsyncFounders — source-backed operating memory for async founders";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -22,8 +22,8 @@ export default function Image() {
       </div>
       <div style={{ display: "flex", flexDirection: "column", maxWidth: 980 }}>
         <div style={{ display: "flex", color: "#087837", fontSize: 22, fontWeight: 700, letterSpacing: "3px", marginBottom: 22 }}>THE ASYNC COMPANY MIDDLEMAN</div>
-        <div style={{ display: "flex", fontSize: 76, lineHeight: .98, fontWeight: 700, letterSpacing: "-4px" }}>Talk once. The company remembers.</div>
-        <div style={{ display: "flex", marginTop: 28, fontSize: 27, color: "#526057" }}>Source-backed team memory, delivered through consented AI callbacks.</div>
+        <div style={{ display: "flex", fontSize: 76, lineHeight: .98, fontWeight: 700, letterSpacing: "-4px" }}>Your company should not forget between conversations.</div>
+        <div style={{ display: "flex", marginTop: 28, fontSize: 27, color: "#526057" }}>Versioned memory, indexed sources and natural consented AI callbacks.</div>
       </div>
       <div style={{ position: "absolute", right: 0, bottom: 0, width: 250, height: 18, background: "#18e36b" }} />
     </div>,
