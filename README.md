@@ -25,6 +25,12 @@ AsyncFounders is a public, multi-tenant coordination product for distributed fou
 - Failed, malformed, ambiguous, contradictory and low-confidence calls fail closed.
 - Company-wide settings, agent guidance and confirmed company deletion.
 
+## Production callback integrity
+
+Every real callback is self-recipient and follows a frozen review envelope. The preview binds the authenticated member, masked destination, full server-side phone fingerprint, locale, quiet-hours policy, company version, approved source-aware script and provider metadata. Confirmation atomically claims that exact payload, and an ambiguous provider response is reconciled with the same idempotency key instead of creating another call.
+
+Terminal results fail closed unless the provider call, recipient and reviewed envelope match. Only recipient-authored, negation-aware transcript evidence may corroborate a typed memory item; agent speech and raw transcripts are never retained in shared company state. Catch-up cursors advance only through the unseen versions actually included in the approved briefing.
+
 ## Stack
 
 - Next.js App Router and TypeScript
