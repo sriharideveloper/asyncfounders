@@ -1,16 +1,8 @@
-type BriefingMemory = {
-  version: number;
-  kind: string;
-  title: string;
-  body: string;
-  status: string;
-  confidence: number;
-  source_excerpt?: string | null;
-};
+import { approvedCallContext, type MemoryContext } from "./call-safety.ts";
 
 type BriefingChunk = { content: string; ordinal: number; sourceLabel: string };
 
-const MAX_BRIEFING_CHARACTERS = 18_000;
+const MAX_BRIEFING_CHARACTERS = 24_000;
 
 function terms(value: string) {
   return new Set(value.toLowerCase().match(/[a-z0-9]{3,}/g) ?? []);
@@ -25,34 +17,43 @@ function scoreChunk(chunk: BriefingChunk, queryTerms: Set<string>) {
 }
 
 export function compileCallBriefing(input: {
+  mode: "deposit" | "catchup" | "ask";
   companyDescription: string;
   agentInstructions?: string;
   focus?: string;
   lastBriefedVersion: number;
-  memories: BriefingMemory[];
+  memories: MemoryContext[];
   chunks: BriefingChunk[];
 }) {
-  const queryTerms = terms(`${input.focus ?? ""} ${input.companyDescription}`);
+  const memory = approvedCallContext(input.mode, input.memories, input.lastBriefedVersion);
+  if (memory.reason) return { briefing: null, reason: memory.reason, contextVersion: memory.contextVersion, contextItems: 0 };
+
+  const queryTerms = terms(`${input.focus ?? ""} ${input.companyDescription} ${memory.briefing ?? ""}`);
   const relevantChunks = [...input.chunks]
     .sort((a, b) => scoreChunk(b, queryTerms) - scoreChunk(a, queryTerms))
     .slice(0, 12);
-  const unseen = input.memories.filter((item) => item.version > input.lastBriefedVersion);
-  const unresolved = input.memories.filter((item) => ["open", "proposed"].includes(item.status));
 
   const sections = [
-    `COMPANY CONTEXT\n${input.companyDescription || "No company description has been added."}`,
-    input.agentInstructions?.trim() ? `COMPANY-SPECIFIC AGENT GUIDANCE\n${input.agentInstructions.trim()}` : "",
+    memory.briefing ?? "",
+    `COMPANY CONTEXT\n${(input.companyDescription || "No company description has been added.").slice(0, 2_000)}`,
+    input.agentInstructions?.trim() ? `COMPANY-SPECIFIC AGENT GUIDANCE\n${input.agentInstructions.trim().slice(0, 3_000)}` : "",
     input.focus?.trim() ? `FOCUS REQUESTED BY THE RECIPIENT\n${input.focus.trim()}` : "",
-    unseen.length ? `UNSEEN MEMORY DELTAS\n${unseen.slice(0, 18).map(formatMemory).join("\n")}` : "UNSEEN MEMORY DELTAS\nNone recorded.",
-    unresolved.length ? `OPEN QUESTIONS, PROPOSALS AND CONFLICTS\n${unresolved.slice(0, 14).map(formatMemory).join("\n")}` : "",
-    input.memories.length ? `RECENT VERSIONED MEMORY\n${input.memories.slice(0, 24).map(formatMemory).join("\n")}` : "",
-    relevantChunks.length ? `INDEXED SOURCE EXCERPTS\n${relevantChunks.map((chunk) => `[${chunk.sourceLabel} · chunk ${chunk.ordinal + 1}] ${chunk.content}`).join("\n\n")}` : "INDEXED SOURCE EXCERPTS\nNo indexed source text is available yet.",
   ].filter(Boolean);
+  let briefing = sections.join("\n\n");
+  let includedChunks = 0;
 
-  return sections.join("\n\n").slice(0, MAX_BRIEFING_CHARACTERS);
-}
+  if (!relevantChunks.length) {
+    briefing += "\n\nINDEXED SOURCE EXCERPTS\nNo indexed source text is available yet.";
+  } else {
+    const heading = "\n\nINDEXED SOURCE EXCERPTS";
+    if (briefing.length + heading.length <= MAX_BRIEFING_CHARACTERS) briefing += heading;
+    for (const chunk of relevantChunks) {
+      const line = `\n\n[${chunk.sourceLabel} · chunk ${chunk.ordinal + 1}] ${chunk.content}`;
+      if (briefing.length + line.length > MAX_BRIEFING_CHARACTERS) break;
+      briefing += line;
+      includedChunks += 1;
+    }
+  }
 
-function formatMemory(item: BriefingMemory) {
-  const evidence = item.source_excerpt ? ` Evidence: ${item.source_excerpt}` : "";
-  return `[v${item.version} · ${item.kind} · ${item.status} · confidence ${Number(item.confidence).toFixed(2)}] ${item.title}: ${item.body}${evidence}`;
+  return { briefing, reason: null, contextVersion: memory.contextVersion, contextItems: memory.memoryItems + includedChunks };
 }

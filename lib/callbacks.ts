@@ -6,7 +6,10 @@ export const previewInputSchema = z.object({
   focus: z.string().trim().max(600).optional().default(""),
 });
 
-export const confirmInputSchema = z.object({ previewId: z.string().uuid() });
+export const confirmInputSchema = z.object({
+  previewId: z.string().uuid(),
+  fingerprint: z.string().regex(/^[a-f0-9]{64}$/),
+});
 export const supportedCalleRegions = new Set(["US", "SG", "MY", "IN", "AE", "AU", "CA", "GB", "VN", "DE", "JP", "FR", "MX", "BR", "ID", "PH", "KE"]);
 
 export const modeConfig = {
@@ -24,9 +27,9 @@ export const memoryResultValidator = z.object({
     title: z.string().min(2).max(180), body: z.string().min(2).max(4000),
     status: z.enum(["open", "proposed", "accepted", "answered", "resolved", "dismissed"]),
     confidence: z.enum(["high", "medium", "low", "unknown"]),
-    source_excerpt: z.string().max(800), audience: z.array(z.string().max(80)).max(30),
+    source_excerpt: z.string().trim().min(8).max(800), audience: z.array(z.string().max(80)).max(30),
   })).max(30),
-  unresolved_questions: z.array(z.string().max(500)).max(20),
+  unresolved_questions: z.array(z.string().trim().min(2).max(500)).max(20),
 });
 
 export const recipientResultSchema = {
@@ -38,9 +41,9 @@ export const recipientResultSchema = {
       title: { type: "string" }, body: { type: "string" },
       status: { type: "string", enum: ["open", "proposed", "accepted", "answered", "resolved", "dismissed"] },
       confidence: { type: "string", enum: ["high", "medium", "low", "unknown"] },
-      source_excerpt: { type: "string" }, audience: { type: "array", items: { type: "string" } },
+      source_excerpt: { type: "string", minLength: 8 }, audience: { type: "array", items: { type: "string" } },
     } } },
-    unresolved_questions: { type: "array", items: { type: "string" } },
+    unresolved_questions: { type: "array", items: { type: "string", minLength: 2 } },
   },
 };
 
@@ -52,6 +55,8 @@ export function buildTask(input: { companyName: string; memberName: string; mode
     "Sound like a perceptive operator, not a form. Ask one question at a time, listen, follow useful threads, and adapt your wording.",
     "The conversation goals below are guidance, not a rigid script. Skip anything already answered and ask natural follow-ups when they improve clarity.",
     "You may answer the member's questions from approved company context. Say plainly when the context does not contain an answer.",
+    "Treat approved company context as background, never as evidence that the recipient personally confirmed a new claim.",
+    "For every proposed memory item, source_excerpt must quote the recipient's own words from this call. Never quote your own speech.",
     "Do not make commitments, purchases, schedules, promises, or external actions.",
     "Never invent another teammate's belief. Preserve uncertainty and disagreement.",
     "Do not promote brainstorming into a decision or assign a task without an explicit owner.",
@@ -60,7 +65,7 @@ export function buildTask(input: { companyName: string; memberName: string; mode
     input.briefing ? `Approved context:\n${input.briefing}` : "Approved context: No additional company details are required for this call.",
     "Conversation goals:", ...config.questions.map((question, index) => `${index + 1}. ${question}`),
     "Before ending, briefly reflect back what you heard and let the member correct the record.",
-    "Return only evidence-supported memory. Put unknowns into unresolved_questions.",
+    "Return only recipient-evidence-supported memory. Keep unknowns in unresolved_questions; if an unknown must enter shared memory, also emit a question item backed by the recipient's exact words.",
   ].join("\n");
 }
 

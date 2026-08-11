@@ -17,9 +17,19 @@ AsyncFounders is a public, multi-tenant coordination product for distributed fou
 - Private E.164 callback profiles with explicit consent.
 - Self-recipient callbacks bound to the authenticated member; ambiguous historical numbers fail closed.
 - Exact callback preview, ten-minute expiry and payload-bound idempotency.
+- Recipient-local quiet hours enforced at preview and dispatch.
+- Atomic self-recipient preview creation and stable reconciliation after ambiguous provider responses.
 - Server-only CALL-E integration with source-backed briefings, flexible conversation goals and strict structured-result validation.
-- Failed, malformed, ambiguous and low-confidence calls fail closed.
+- Terminal results are bound to the reviewed provider call, script, metadata, locale and phone destination.
+- Only negation-aware recipient evidence can enter shared memory; raw transcripts are never retained.
+- Failed, malformed, ambiguous, contradictory and low-confidence calls fail closed.
 - Company-wide settings, agent guidance and confirmed company deletion.
+
+## Production callback integrity
+
+Every real callback is self-recipient and follows a frozen review envelope. The preview binds the authenticated member, masked destination, full server-side phone fingerprint, locale, quiet-hours policy, company version, approved source-aware script and provider metadata. Confirmation atomically claims that exact payload, and an ambiguous provider response is reconciled with the same idempotency key instead of creating another call.
+
+Terminal results fail closed unless the provider call, recipient and reviewed envelope match. Only recipient-authored, negation-aware transcript evidence may corroborate a typed memory item; agent speech and raw transcripts are never retained in shared company state. Catch-up cursors advance only through the unseen versions actually included in the approved briefing.
 
 ## Stack
 
@@ -36,7 +46,15 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Run `supabase/migrations/001_production_schema.sql` once in the Supabase SQL editor, followed by `supabase/migrations/002_founder_memory_upgrade.sql`, then configure:
+Run the SQL migrations in order:
+
+1. `supabase/migrations/001_production_schema.sql`
+2. `supabase/migrations/002_founder_memory_upgrade.sql`
+3. `supabase/migrations/003_callback_integrity_hardening.sql`
+
+Apply migration 003 before deploying this application version. It atomically claims callback previews, makes call-session reads requester-only, purges historical provider evidence, and upgrades the callback-profile RPC with quiet-hours support.
+
+Then configure:
 
 ```text
 NEXT_PUBLIC_SUPABASE_URL
@@ -59,7 +77,8 @@ npm run check
 
 1. Import `sriharideveloper/asyncfounders` into Vercel.
 2. Add the six environment variables above to Production, Preview and Development.
-3. Deploy.
-4. In Supabase Authentication URL Configuration, set the Vercel production origin as the Site URL and add `<origin>/**` as an allowed redirect URL.
+3. Apply all Supabase migrations through `003_callback_integrity_hardening.sql`.
+4. Deploy.
+5. In Supabase Authentication URL Configuration, set the Vercel production origin as the Site URL and add `<origin>/**` as an allowed redirect URL.
 
 Product invariants and future-agent guidance live in `AGENTS.md`.
